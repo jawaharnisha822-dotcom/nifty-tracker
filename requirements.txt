@@ -1,2 +1,5 @@
 streamlit
 yfinance
+pandas
+lxml
+html5lib
