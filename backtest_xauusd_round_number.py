@@ -120,6 +120,39 @@ def run_backtest(df: pd.DataFrame, cfg: Inputs):
             pending = None
             setup_active = False
 
+        # --- manage open trade exit (checked BEFORE new fills, using this
+        # bar's full range, so a trade opened *this* bar is only exit-tested
+        # starting next bar - we have no tick data to know whether a level
+        # on the entry bar was touched before or after the entry itself) ---
+        if open_trade is not None:
+            if open_trade.direction == 1:
+                hit_sl = l <= open_trade.sl
+                hit_tp = h >= open_trade.tp
+            else:
+                hit_sl = h >= open_trade.sl
+                hit_tp = l <= open_trade.tp
+
+            exit_price = None
+            if hit_sl and hit_tp:
+                exit_price = open_trade.sl  # conservative: SL first
+            elif hit_sl:
+                exit_price = open_trade.sl
+            elif hit_tp:
+                exit_price = open_trade.tp
+
+            if exit_price is not None:
+                open_trade.exit_time = t
+                open_trade.exit_price = exit_price
+                if open_trade.direction == 1:
+                    pnl = (exit_price - open_trade.entry_price) * open_trade.qty * cfg.point_value
+                else:
+                    pnl = (open_trade.entry_price - exit_price) * open_trade.qty * cfg.point_value
+                open_trade.pnl = pnl
+                equity += pnl
+                trades.append(open_trade)
+                equity_curve.append((t, equity))
+                open_trade = None
+
         # --- manage pending entry orders ---
         if setup_active and pending is not None and open_trade is None and not trade_taken_today:
             buy_entry, buy_sl, buy_tp, buy_qty = pending["buy"]
@@ -149,40 +182,6 @@ def run_backtest(df: pd.DataFrame, cfg: Inputs):
                 open_trade = Trade(-1, t, sell_entry, sell_sl, sell_tp, sell_qty)
                 pending = None
                 trade_taken_today = True
-
-        # --- manage open trade exit ---
-        if open_trade is not None:
-            entry_bar = open_trade.entry_time == t
-            # only test exit levels from the entry bar onward (inclusive, since
-            # a stop order can be hit intrabar right after fill)
-            if entry_bar or open_trade.exit_time is None:
-                if open_trade.direction == 1:
-                    hit_sl = l <= open_trade.sl
-                    hit_tp = h >= open_trade.tp
-                else:
-                    hit_sl = h >= open_trade.sl
-                    hit_tp = l <= open_trade.tp
-
-                exit_price = None
-                if hit_sl and hit_tp:
-                    exit_price = open_trade.sl  # conservative: SL first
-                elif hit_sl:
-                    exit_price = open_trade.sl
-                elif hit_tp:
-                    exit_price = open_trade.tp
-
-                if exit_price is not None:
-                    open_trade.exit_time = t
-                    open_trade.exit_price = exit_price
-                    if open_trade.direction == 1:
-                        pnl = (exit_price - open_trade.entry_price) * open_trade.qty * cfg.point_value
-                    else:
-                        pnl = (open_trade.entry_price - exit_price) * open_trade.qty * cfg.point_value
-                    open_trade.pnl = pnl
-                    equity += pnl
-                    trades.append(open_trade)
-                    equity_curve.append((t, equity))
-                    open_trade = None
 
     return trades, equity, equity_curve
 
