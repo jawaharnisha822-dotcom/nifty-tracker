@@ -36,6 +36,16 @@ class Inputs:
     setup_hour: int = 9
     setup_minute: int = 0
     initial_capital: float = 5000.0
+    # Entry window: a pending stop order is cancelled (no trade taken that
+    # day) if it hasn't filled by this time. None = no cutoff (original
+    # Pine behaviour - the order stays live until the next day's setup).
+    entry_cutoff_hour: int | None = None
+    entry_cutoff_minute: int | None = None
+    # Holding deadline: an open position is force-closed at this time (at
+    # that bar's close price) if SL/TP hasn't been hit yet. None = no
+    # cutoff (position can carry over to later days).
+    hold_cutoff_hour: int | None = None
+    hold_cutoff_minute: int | None = None
 
 
 @dataclass
@@ -120,6 +130,11 @@ def run_backtest(df: pd.DataFrame, cfg: Inputs):
             pending = None
             setup_active = False
 
+        # --- cancel a pending entry order once the entry window has closed ---
+        if (pending is not None and cfg.entry_cutoff_hour is not None
+                and t.hour == cfg.entry_cutoff_hour and t.minute == cfg.entry_cutoff_minute):
+            pending = None
+
         # --- manage open trade exit (checked BEFORE new fills, using this
         # bar's full range, so a trade opened *this* bar is only exit-tested
         # starting next bar - we have no tick data to know whether a level
@@ -139,6 +154,9 @@ def run_backtest(df: pd.DataFrame, cfg: Inputs):
                 exit_price = open_trade.sl
             elif hit_tp:
                 exit_price = open_trade.tp
+            elif (cfg.hold_cutoff_hour is not None
+                    and t.hour == cfg.hold_cutoff_hour and t.minute == cfg.hold_cutoff_minute):
+                exit_price = c  # forced time-based exit at this bar's close
 
             if exit_price is not None:
                 open_trade.exit_time = t
@@ -224,10 +242,28 @@ def main():
     parser.add_argument("csv_path", help="Path to OHLC CSV file (Time, Open, High, Low, Close)")
     parser.add_argument("--setup-hour", type=int, default=9)
     parser.add_argument("--setup-minute", type=int, default=0)
+    parser.add_argument("--round-size", type=float, default=100.0)
+    parser.add_argument("--entry-buffer", type=float, default=3.15)
+    parser.add_argument("--sl-from-round", type=float, default=5.0)
+    parser.add_argument("--rr", type=float, default=1.0)
+    parser.add_argument("--risk-pct", type=float, default=1.0)
+    parser.add_argument("--cap", type=float, default=5000.0)
+    parser.add_argument("--block-friday", action="store_true")
+    parser.add_argument("--entry-cutoff-hour", type=int, default=None)
+    parser.add_argument("--entry-cutoff-minute", type=int, default=None)
+    parser.add_argument("--hold-cutoff-hour", type=int, default=None)
+    parser.add_argument("--hold-cutoff-minute", type=int, default=None)
     parser.add_argument("--trades-out", default=None, help="Optional path to write per-trade CSV")
     args = parser.parse_args()
 
-    cfg = Inputs(setup_hour=args.setup_hour, setup_minute=args.setup_minute)
+    cfg = Inputs(
+        setup_hour=args.setup_hour, setup_minute=args.setup_minute,
+        round_size=args.round_size, entry_buffer=args.entry_buffer,
+        sl_from_round=args.sl_from_round, rr=args.rr, risk_percent=args.risk_pct,
+        initial_capital=args.cap, block_friday=args.block_friday,
+        entry_cutoff_hour=args.entry_cutoff_hour, entry_cutoff_minute=args.entry_cutoff_minute,
+        hold_cutoff_hour=args.hold_cutoff_hour, hold_cutoff_minute=args.hold_cutoff_minute,
+    )
     df = load_data(args.csv_path)
     trades, final_equity, equity_curve = run_backtest(df, cfg)
     stats = summarize(trades, final_equity, equity_curve, cfg)
