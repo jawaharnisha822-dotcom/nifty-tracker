@@ -59,6 +59,7 @@ class Trade:
     exit_time: pd.Timestamp = None
     exit_price: float = None
     pnl: float = None
+    exit_reason: str = None  # "SL", "TP", or "TIME" (forced holding-cutoff close)
 
 
 def load_data(path: str) -> pd.DataFrame:
@@ -148,19 +149,25 @@ def run_backtest(df: pd.DataFrame, cfg: Inputs):
                 hit_tp = l <= open_trade.tp
 
             exit_price = None
+            exit_reason = None
             if hit_sl and hit_tp:
                 exit_price = open_trade.sl  # conservative: SL first
+                exit_reason = "SL"
             elif hit_sl:
                 exit_price = open_trade.sl
+                exit_reason = "SL"
             elif hit_tp:
                 exit_price = open_trade.tp
+                exit_reason = "TP"
             elif (cfg.hold_cutoff_hour is not None
                     and t.hour == cfg.hold_cutoff_hour and t.minute == cfg.hold_cutoff_minute):
                 exit_price = c  # forced time-based exit at this bar's close
+                exit_reason = "TIME"
 
             if exit_price is not None:
                 open_trade.exit_time = t
                 open_trade.exit_price = exit_price
+                open_trade.exit_reason = exit_reason
                 if open_trade.direction == 1:
                     pnl = (exit_price - open_trade.entry_price) * open_trade.qty * cfg.point_value
                 else:
