@@ -1,0 +1,63 @@
+
+=== 2025-01-01 -> 2026-06-09 ===  (mc_steps=320 = harshest realistic resolution, $0.30 cost, 8 seeds)
+  trades      182
+  win rate    38.04%
+  profit factor 1.176  (range 1.13-1.23)
+  expectancy  +0.123 R  (sd 0.021)
+  net on $5k  $1,145   (+22.9%)
+  max DD      25.6%
+  seeds profitable 8/8   max losing streak 11
+  by year:
+           n   expR      net
+yr                          
+2025  94.125  0.186  896.116
+2026  88.250  0.057  248.572
+  by side:
+            n   expR
+side                
+long   96.625  0.147
+short  85.750  0.097
+
+=== 2016-2024 OUT-OF-SAMPLE ===  (mc_steps=320 = harshest realistic resolution, $0.30 cost, 8 seeds)
+  trades      186
+  win rate    36.43%
+  profit factor 1.100  (range 1.05-1.17)
+  expectancy  +0.074 R  (sd 0.033)
+  net on $5k  $635   (+12.7%)
+  max DD      14.7%
+  seeds profitable 8/8   max losing streak 10
+  by year:
+           n   expR      net
+yr                          
+2016   9.500  0.566  267.576
+2017   8.750 -0.104  -57.287
+2018   6.000  0.482  149.038
+2019  15.875 -0.620 -503.367
+2020  41.000  0.271  549.034
+2021  27.000 -0.130 -196.606
+2022  25.500 -0.203 -274.209
+2023  16.250  0.579  472.279
+2024  35.750  0.126  228.712
+
+=== FULL 2016-2026 ===  (mc_steps=320 = harshest realistic resolution, $0.30 cost, 8 seeds)
+  trades      368
+  win rate    37.31%
+  profit factor 1.145  (range 1.12-1.18)
+  expectancy  +0.101 R  (sd 0.013)
+  net on $5k  $1,980   (+39.6%)
+  max DD      25.4%
+  seeds profitable 8/8   max losing streak 11
+  by year:
+           n   expR      net
+yr                          
+2016   9.500  0.566  267.576
+2017   8.750 -0.104  -57.287
+2018   6.000  0.482  149.038
+2019  15.875 -0.620 -503.367
+2020  41.000  0.271  549.034
+2021  27.000 -0.130 -196.606
+2022  25.500 -0.203 -274.209
+2023  16.250  0.579  472.279
+2024  35.750  0.126  228.712
+2025  93.750  0.182  982.395
+2026  88.500  0.071  362.407

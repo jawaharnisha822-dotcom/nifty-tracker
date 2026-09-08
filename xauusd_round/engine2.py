@@ -168,6 +168,8 @@ def backtest2(df: pd.DataFrame, p: P2) -> dict:
                     if abs(o - od["stop"]) <= p.max_slip:
                         _sl, _tp = do_fill(od, o, i)
                         lo_t = min(lo_t, _sl, _tp); hi_t = max(hi_t, _sl, _tp)
+                    # a trigger that gapped past max_slip is treated as fired
+                    # but unfilled: both sides of the OCA pair are pulled.
                     pend = []                       # B1: global OCA
                     break
 
@@ -204,9 +206,10 @@ def backtest2(df: pd.DataFrame, p: P2) -> dict:
                         lo_t = min(lo_t, _sl, _tp); hi_t = max(hi_t, _sl, _tp)
                         pend = []                   # B1: global OCA
                     cur = price
-                # breakeven stop
+                # breakeven stop - measured against the leg endpoint, which is
+                # the furthest price reached on this leg
                 if pos and p.breakeven_at_r > 0 and not pos["be_done"]:
-                    mv = (cur - pos["entry"]) if pos["side"] == "long" else (pos["entry"] - cur)
+                    mv = (b - pos["entry"]) if pos["side"] == "long" else (pos["entry"] - b)
                     if mv >= p.breakeven_at_r * pos["risk"]:
                         pos["sl"] = pos["entry"]
                         pos["be_done"] = True

@@ -1,0 +1,26 @@
+
+### 2025-01-01 -> 2026-06-09  (the period you asked for)  — expectancy (R) vs intrabar resolution
+    (columns = mc_steps; higher = finer view inside the bar)
+k                                             40     80    160    320    min STABLE      n
+name                                                                                      
+wide sl15 rr1.5 $100 ONLY @05:30           0.204  0.197  0.158  0.123  0.123    YES  222.0
+wide sl15 rr1.5 $100 ONLY                  0.193  0.167  0.140  0.120  0.120    YES  222.0
+wide  buf3.15 sl15.0 rr1.5 09:00           0.146  0.120  0.098  0.086  0.086    YES  517.0
+wide  buf2.0  sl15.0 rr2.0 09:00           0.164  0.142  0.100  0.076  0.076    YES  519.0
+wide  buf5.0  sl15.0 rr1.5 09:00           0.135  0.104  0.051  0.042  0.042    YES  499.0
+wide  buf3.15 sl6.0  rr3.0 09:00           0.208  0.136  0.088  0.001  0.001    YES  536.0
+USER params @05:30                         0.289  0.195  0.087 -0.049 -0.049     no  549.0
+USER  buf3.15 sl2.0  rr2.0 09:00 [100+50]  0.127  0.063 -0.069 -0.145 -0.145     no  539.0
+
+### 2016-2024  OUT-OF-SAMPLE  — expectancy (R) vs intrabar resolution
+    (columns = mc_steps; higher = finer view inside the bar)
+k                                             40     80    160    320    min STABLE       n
+name                                                                                       
+wide  buf2.0  sl15.0 rr2.0 09:00           0.057  0.042  0.028  0.016  0.016    YES   684.0
+wide sl15 rr1.5 $100 ONLY @05:30           0.057  0.037  0.023 -0.020 -0.020     no   231.0
+wide  buf5.0  sl15.0 rr1.5 09:00           0.017  0.013 -0.003 -0.026 -0.026     no   622.0
+wide  buf3.15 sl15.0 rr1.5 09:00           0.021  0.005 -0.010 -0.037 -0.037     no   694.0
+wide sl15 rr1.5 $100 ONLY                  0.019 -0.009 -0.012 -0.050 -0.050     no   228.0
+wide  buf3.15 sl6.0  rr3.0 09:00          -0.031 -0.045 -0.061 -0.086 -0.086     no  1037.0
+USER  buf3.15 sl2.0  rr2.0 09:00 [100+50] -0.006 -0.048 -0.107 -0.146 -0.146     no  1168.0
+USER params @05:30                        -0.031 -0.065 -0.097 -0.161 -0.161     no  1177.0

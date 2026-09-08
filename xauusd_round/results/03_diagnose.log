@@ -1,0 +1,33 @@
+=== Distance from 09:00 open to the entry stop ($) — 2025+ ===
+       d_up100  d_dn100  d_up50  d_dn50
+count   370.00   370.00  370.00  370.00
+mean     52.81    53.49   27.95   28.35
+std      28.48    28.48   14.42   14.42
+min       4.34     3.30    3.62    3.30
+25%      28.97    29.85   15.45   15.67
+50%      52.76    53.54   28.28   28.02
+75%      76.45    77.33   40.63   40.85
+max     103.00   101.96   53.01   52.68
+
+=== By round group (avg per seed) ===
+            n      net     wr
+group                        
+50     311.83 -1515.87  31.80
+100    227.83   270.32  36.95
+
+=== By side ===
+            n      net     wr
+side                         
+long   286.50   -43.70  35.72
+short  253.17 -1201.85  32.00
+
+=== By year (expectancy in R) ===
+            n   expR      wr
+yr                          
+2025  327.167 -0.036  34.090
+2026  212.500 -0.051  33.806
+
+=== Level collision (double risk on one level) ===
+  BUY100 == BUY50  on 50.3% of days
+  SELL100 == SELL50 on 49.7% of days
+  at least one side collides: 100.0%

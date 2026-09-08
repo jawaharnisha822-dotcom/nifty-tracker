@@ -1,13 +1,16 @@
 """Out-of-sample validation: is the 'best setup time' a real edge or data mining?"""
 from sweep import *
+import sweep as _sw
+_sw.EVAL["seeds"] = 3   # lean: 3 seeds is plenty for a rank correlation
 if __name__ == "__main__":
     grid = [((("hour", h), ("min", m)), dict(setup_hour=h, setup_minute=m))
-            for h in range(24) for m in (0, 15, 30, 45)]
+            for h in range(24) for m in (0, 30)]
 
     print("=== IN-SAMPLE  2016-2024 ===", flush=True)
     old = sweep(grid, period=("2016-01-01", "2025-01-01"))
     old.to_csv("results/wf_2016_2024.csv", index=False)
-    new = pd.read_csv("results/sweep_hour.csv")          # 2025+ already computed
+    new = sweep(grid, period=("2025-01-01", "2026-12-31"))
+    new.to_csv("results/wf_2025_2026.csv", index=False)
 
     m = old.merge(new, on=["hour", "min"], suffixes=("_old", "_new"))
     m["key"] = m.apply(lambda r: f"{int(r.hour):02d}:{int(r['min']):02d}", axis=1)

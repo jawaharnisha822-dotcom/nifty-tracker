@@ -1,1 +1,9 @@
 + python3 sweep_hour.py
++ python3 calibrate.py
++ python3 diagnose.py
++ python3 sweep_control.py
++ python3 sweep_params.py
++ python3 walkforward.py
+Terminated
++ echo ALL_EXPERIMENTS_COMPLETE
+ALL_EXPERIMENTS_COMPLETE

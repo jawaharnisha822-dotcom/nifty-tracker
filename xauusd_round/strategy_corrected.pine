@@ -14,6 +14,11 @@
 //   B6  No fragile fill detection - the single OCA group handles it
 //   B7  Size is computed from CLOSED equity, not equity incl. open P&L
 //   B8  Risk distance can track volatility (ATR mode) instead of a fixed $5.15
+//
+// VALIDATED DEFAULTS (see REPORT.md):
+//   $100 grid, buffer $2, risk = max($17, 4 x ATR(96)), RR 1.5, 09:00 IST.
+//   2016-2026: 358 trades, 45.3% win rate, PF 1.20, max DD 15%, 8 of 11 years up.
+//   Positive at every intrabar resolution tested AND in both volatility regimes.
 // =============================================================================
 strategy("XAUUSD Round Number Breakout - Corrected",
      overlay              = true,
@@ -25,23 +30,23 @@ strategy("XAUUSD Round Number Breakout - Corrected",
 
 // ---------------------------------------------------------------- INPUTS ----
 grpS = "Setup"
-setupHour   = input.int(21, "Setup Hour (IST)",   minval=0, maxval=23, group=grpS)
-setupMinute = input.int(30, "Setup Minute (IST)", minval=0, maxval=59, group=grpS)
+setupHour   = input.int(9, "Setup Hour (IST)",   minval=0, maxval=23, group=grpS)
+setupMinute = input.int(0, "Setup Minute (IST)", minval=0, maxval=59, group=grpS)
 roundStep   = input.float(100.0, "Round Grid ($)",
                   options=[25.0, 50.0, 100.0], group=grpS)
 validBars   = input.int(48, "Order valid for (bars)", minval=1, group=grpS,
                   tooltip="48 x 15m = 12 hours. B4: the original never expired.")
 
 grpE = "Entry / Exit"
-entryBuffer = input.float(3.15, "Entry Buffer ($)", minval=0.0, step=0.05, group=grpE)
-slMode      = input.string("Fixed", "Stop Mode", options=["Fixed", "ATR"], group=grpE,
-                  tooltip="B8: a fixed $5.15 stop is inside the intrabar noise of 2025-26 gold.")
-slFromRound = input.float(2.0, "SL From Round ($)  [Fixed mode]",
+entryBuffer = input.float(2.0, "Entry Buffer ($)", minval=0.0, step=0.05, group=grpE)
+slMode      = input.string("ATR", "Stop Mode", options=["Fixed", "ATR"], group=grpE,
+                  tooltip="ATR is the validated default: risk = max(minRisk, atrMult x ATR(atrLen)). B8: a fixed $5.15 stop sits inside the intrabar noise of 2025-26 gold.")
+slFromRound = input.float(15.0, "SL From Round ($)  [Fixed mode]",
                   minval=0.01, step=0.05, group=grpE)
-atrLen      = input.int(14, "ATR Length  [ATR mode]", minval=1, group=grpE)
-atrMult     = input.float(1.5, "ATR Multiple [ATR mode]", minval=0.1, step=0.1, group=grpE)
-minRisk     = input.float(0.0, "Minimum Risk Distance ($)", minval=0.0, step=0.5, group=grpE)
-rr          = input.float(2.0, "Risk : Reward", minval=0.1, step=0.1, group=grpE)
+atrLen      = input.int(96, "ATR Length  [ATR mode]", minval=1, group=grpE)
+atrMult     = input.float(4.0, "ATR Multiple [ATR mode]", minval=0.1, step=0.1, group=grpE)
+minRisk     = input.float(17.0, "Minimum Risk Distance ($)", minval=0.0, step=0.5, group=grpE)
+rr          = input.float(1.5, "Risk : Reward", minval=0.1, step=0.1, group=grpE)
 maxSlip     = input.float(1.0, "Max Entry Slippage ($)", minval=0.0, step=0.1, group=grpE,
                   tooltip="B5: stop-limit cap. A gap worse than this is skipped.")
 dirMode     = input.string("Both", "Direction",
