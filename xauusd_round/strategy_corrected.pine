@@ -1,0 +1,165 @@
+//@version=5
+// =============================================================================
+// XAUUSD Round Number Breakout - CORRECTED
+// Rewrite of "XAUUSD Round Number | 10S | 100 + 50 Dual Strategy | 1% Risk"
+// with the defects listed in BUGS.md (B1-B9) fixed.
+//
+// What changed vs the original:
+//   B1  ONE OCA group for both entries + pyramiding=0  -> risk really is 1%
+//   B2  ONE round grid (no $100/$50 duplication at the same price)
+//   B3  Orders are armed ONLY in the setup bar, never deferred to a random time
+//   B4  Pending orders expire after `validBars`
+//   B5  Stop-limit entry caps gap slippage; the bracket is anchored to the
+//       ACTUAL fill price, so a gap cannot silently double the risk
+//   B6  No fragile fill detection - the single OCA group handles it
+//   B7  Size is computed from CLOSED equity, not equity incl. open P&L
+//   B8  Risk distance can track volatility (ATR mode) instead of a fixed $5.15
+// =============================================================================
+strategy("XAUUSD Round Number Breakout - Corrected",
+     overlay              = true,
+     pyramiding           = 0,
+     initial_capital      = 5000,
+     default_qty_type     = strategy.fixed,
+     process_orders_on_close = false,
+     calc_on_every_tick   = false)
+
+// ---------------------------------------------------------------- INPUTS ----
+grpS = "Setup"
+setupHour   = input.int(21, "Setup Hour (IST)",   minval=0, maxval=23, group=grpS)
+setupMinute = input.int(30, "Setup Minute (IST)", minval=0, maxval=59, group=grpS)
+roundStep   = input.float(100.0, "Round Grid ($)",
+                  options=[25.0, 50.0, 100.0], group=grpS)
+validBars   = input.int(48, "Order valid for (bars)", minval=1, group=grpS,
+                  tooltip="48 x 15m = 12 hours. B4: the original never expired.")
+
+grpE = "Entry / Exit"
+entryBuffer = input.float(3.15, "Entry Buffer ($)", minval=0.0, step=0.05, group=grpE)
+slMode      = input.string("Fixed", "Stop Mode", options=["Fixed", "ATR"], group=grpE,
+                  tooltip="B8: a fixed $5.15 stop is inside the intrabar noise of 2025-26 gold.")
+slFromRound = input.float(2.0, "SL From Round ($)  [Fixed mode]",
+                  minval=0.01, step=0.05, group=grpE)
+atrLen      = input.int(14, "ATR Length  [ATR mode]", minval=1, group=grpE)
+atrMult     = input.float(1.5, "ATR Multiple [ATR mode]", minval=0.1, step=0.1, group=grpE)
+minRisk     = input.float(0.0, "Minimum Risk Distance ($)", minval=0.0, step=0.5, group=grpE)
+rr          = input.float(2.0, "Risk : Reward", minval=0.1, step=0.1, group=grpE)
+maxSlip     = input.float(1.0, "Max Entry Slippage ($)", minval=0.0, step=0.1, group=grpE,
+                  tooltip="B5: stop-limit cap. A gap worse than this is skipped.")
+dirMode     = input.string("Both", "Direction",
+                  options=["Both", "Long only", "Short only"], group=grpE)
+
+grpR = "Risk"
+riskPercent = input.float(1.0, "Risk % Per Trade", minval=0.01, step=0.1, group=grpR)
+pointValue  = input.float(1.0, "Point Value", minval=0.000001, step=0.01, group=grpR)
+useBE       = input.bool(false, "Move SL to breakeven at +1R", group=grpR)
+
+// ------------------------------------------------------------------ TIME ----
+string TZ = "Asia/Kolkata"
+isSetup = hour(time, TZ) == setupHour and minute(time, TZ) == setupMinute
+
+// ----------------------------------------------------------------- STATE ----
+var float riskDist  = na
+var float longStop  = na
+var float shortStop = na
+var float qty       = na
+var float upperR    = na
+var float lowerR    = na
+var int   expireBar = na
+var bool  armed     = false
+var bool  beDone    = false
+
+atrV = ta.atr(atrLen)
+
+// ------------------------------------------------------------- DAILY SETUP --
+if isSetup
+    // B3: cancel anything still pending, then decide once, here and only here.
+    strategy.cancel("LONG")
+    strategy.cancel("SHORT")
+    armed := false
+
+    float ref = open
+    riskDist := slMode == "ATR" ? atrMult * atrV : entryBuffer + slFromRound
+    riskDist := math.max(riskDist, minRisk)
+
+    upperR := math.ceil(ref / roundStep) * roundStep
+    lowerR := math.floor(ref / roundStep) * roundStep
+    if upperR == lowerR                       // open exactly on a round number
+        upperR := ref + roundStep
+        lowerR := ref - roundStep
+
+    longStop  := upperR + entryBuffer
+    shortStop := lowerR - entryBuffer
+
+    // B7: CLOSED equity only - never strategy.equity (which includes open P&L)
+    float closedEq = strategy.initial_capital + strategy.netprofit
+    qty := riskDist > 0 ? (closedEq * riskPercent / 100.0) / (riskDist * pointValue) : 0.0
+
+    expireBar := bar_index + validBars
+    // B3: arm only if genuinely flat. If not flat, this day is simply skipped.
+    armed := strategy.position_size == 0 and qty > 0
+
+// --------------------------------------------------------- PENDING ORDERS ---
+// B1: ONE oca group -> the first fill cancels the other side, and pyramiding=0
+//     means there is never more than one position open.
+// B5: stop-limit (stop = trigger, limit = worst acceptable price) caps gap risk.
+if isSetup and armed
+    if dirMode != "Short only"
+        strategy.entry("LONG", strategy.long, qty = qty,
+             stop = longStop, limit = longStop + maxSlip,
+             oca_name = "RN", oca_type = strategy.oca.cancel)
+    if dirMode != "Long only"
+        strategy.entry("SHORT", strategy.short, qty = qty,
+             stop = shortStop, limit = shortStop - maxSlip,
+             oca_name = "RN", oca_type = strategy.oca.cancel)
+
+// B4: expire stale orders instead of letting them run to the next setup.
+if armed and strategy.position_size == 0 and bar_index >= expireBar
+    strategy.cancel("LONG")
+    strategy.cancel("SHORT")
+    armed := false
+
+// ----------------------------------------------------------------- EXITS ----
+// B5: the bracket is anchored to the REAL fill price, so the distance risked is
+//     always exactly riskDist no matter where the order actually filled.
+if strategy.position_size != 0
+    float e = strategy.position_avg_price
+    bool isLong = strategy.position_size > 0
+
+    if armed
+        armed := false
+        beDone := false
+
+    float sl = isLong ? e - riskDist : e + riskDist
+    float tp = isLong ? e + riskDist * rr : e - riskDist * rr
+
+    if useBE
+        float move = isLong ? close - e : e - close
+        if move >= riskDist
+            beDone := true
+        if beDone
+            sl := e
+
+    strategy.exit("X", from_entry = isLong ? "LONG" : "SHORT", stop = sl, limit = tp)
+else
+    beDone := false
+
+// ---------------------------------------------------------------- VISUAL ----
+plotFlag = not na(upperR)
+plot(plotFlag ? upperR    : na, "Upper Round", color.new(color.gray,   40),
+     1, plot.style_linebr)
+plot(plotFlag ? lowerR    : na, "Lower Round", color.new(color.gray,   40),
+     1, plot.style_linebr)
+plot(plotFlag ? longStop  : na, "Long Trigger",  color.green, 2, plot.style_linebr)
+plot(plotFlag ? shortStop : na, "Short Trigger", color.red,   2, plot.style_linebr)
+
+if isSetup
+    label.new(bar_index, high,
+         "SETUP " + str.tostring(setupHour) + ":" + str.tostring(setupMinute, "00") +
+         " IST\nopen "   + str.tostring(open,      "#.##") +
+         "\ngrid $"      + str.tostring(roundStep, "#") +
+         "\nlong "       + str.tostring(longStop,  "#.##") +
+         "\nshort "      + str.tostring(shortStop, "#.##") +
+         "\nrisk $"      + str.tostring(riskDist,  "#.##") +
+         "\nqty "        + str.tostring(qty,       "#.##") +
+         (armed ? "" : "\nSKIPPED (not flat)"),
+         style = label.style_label_down, textcolor = color.white,
+         color = armed ? color.new(color.teal, 20) : color.new(color.maroon, 20))
