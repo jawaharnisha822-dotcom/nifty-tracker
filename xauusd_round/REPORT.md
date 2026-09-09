@@ -327,3 +327,37 @@ version: PF 1.204 → **1.331**, drawdown 15.0 % → **11.8 %**, return +48.7 % 
 
 This is the largest single improvement found in the whole study — and it came
 from your observation, not from parameter fitting.
+
+---
+
+## 12. "Market entry toward the nearer level, fixed $5-10 SL, 1:2 RR" — tested, FAILS
+
+A follow-up question asked to test a simpler version of the idea: at 09:00 IST,
+find the nearer $100 level, enter **immediately at the open** (market order, no
+breakout confirmation) in the direction of that level, with a **fixed** SL
+between $5 and $10, target at 1:2 RR, no other filter.
+
+| risk ($) | 2025+ WR | 2025+ PF | 2025+ net | 2016-24 PF | 2016-24 max DD |
+|---|---|---|---|---|---|
+| 5 | 29.7% | 0.783 | −$2,397 | 0.840 | 86.2% |
+| 6 | 31.0% | 0.836 | −$1,877 | 0.857 | 82.3% |
+| 7 | 31.7% | 0.871 | −$1,566 | 0.797 | 88.7% |
+| 8 | 32.4% | 0.908 | −$1,211 | 0.880 | 73.4% |
+| 9 | 33.7% | 0.956 | −$581 | 0.897 | 65.8% |
+| 10 | 32.9% | 0.933 | −$881 | 0.931 | 55.8% |
+
+**Negative at every stop size, in both eras.** Best case (risk $9, 2025+) still
+has PF < 1. 2016-2024 drawdowns of 55-93% — this would have wiped out an account.
+
+**Why it fails, unlike the validated "nearer" filter in section 11:** the
+statistic in section 11 says price is more likely to *touch* the nearer level
+eventually — not that it moves toward it immediately from the open with no
+confirmation. An unconditional market entry with no breakout confirmation and a
+fixed dollar stop is a coin-flip directional bet (WR 30-34%, below the 33.3%
+breakeven for 2R) sitting on a stop distance that is still inside 15-min noise.
+It is the "magnet trade" from section 11 again, made worse by removing the wait
+for actual price confirmation.
+
+**Do not use this version.** Use the breakout-order + nearer-side filter +
+ATR stop from sections 8 and 11 (already in `strategy_corrected.pine`) instead —
+that is the one shown to work.
