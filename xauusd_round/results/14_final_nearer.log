@@ -1,0 +1,47 @@
+FINAL CONFIG (recommended + NEARER-side filter):
+  {'round_step': 100.0, 'entry_buffer': 2.0, 'sl_mode': 'atr', 'atr_len': 96, 'atr_mult': 4.0, 'min_risk': 17.0, 'rr': 1.5, 'setup_hour': 9, 'setup_minute': 0, 'valid_bars': 48, 'max_slip': 1.0, 'side_select': 'nearer'}
+
+--- resolution stability (expectancy R, 8 seeds) ---
+  2025+      k=40: +0.227   k=120: +0.228   k=320: +0.208
+  2016-2024  k=40: +0.148   k=120: +0.149   k=320: +0.144
+
+=== 2025-01-01 -> 2026-06-09 === (mc_steps=320 harshest, $0.30 cost, 8 seeds)
+  trades 135 | WR 48.75% | PF 1.383 (1.33-1.43) | E +0.208R
+  net $1,553 (+31.1%) | maxDD 7.9% | seeds+ 8/8 | worst streak 6
+          n  expR      net yr_result
+yr                                  
+2025  78.25  0.25  1019.89    PROFIT
+2026  56.62  0.16   532.69    PROFIT
+  by side: {'long': 0.341, 'short': 0.061} | counts: {'long': 71.0, 'short': 64.0}
+
+=== 2016-2024 OUT-OF-SAMPLE === (mc_steps=320 harshest, $0.30 cost, 8 seeds)
+  trades 190 | WR 46.46% | PF 1.257 (1.20-1.28) | E +0.144R
+  net $1,476 (+29.5%) | maxDD 11.8% | seeds+ 8/8 | worst streak 10
+          n  expR     net yr_result
+yr                                 
+2016   9.25  0.34  152.85    PROFIT
+2017   8.25 -0.21  -95.61      loss
+2018   6.00  0.23   68.52    PROFIT
+2019  17.00 -0.15 -138.47      loss
+2020  35.88  0.31  568.36    PROFIT
+2021  29.00 -0.04  -71.87      loss
+2022  27.00  0.01    1.32    PROFIT
+2023  23.12  0.23  281.50    PROFIT
+2024  35.00  0.34  709.33    PROFIT
+
+=== FULL 2016-2026 === (mc_steps=320 harshest, $0.30 cost, 8 seeds)
+  trades 326 | WR 47.62% | PF 1.331 (1.30-1.35) | E +0.176R
+  net $3,636 (+72.7%) | maxDD 11.8% | seeds+ 8/8 | worst streak 10
+          n  expR      net yr_result
+yr                                  
+2016   9.25  0.34   152.85    PROFIT
+2017   8.25 -0.21   -95.61      loss
+2018   6.00  0.23    68.52    PROFIT
+2019  17.00 -0.15  -138.47      loss
+2020  35.88  0.31   568.36    PROFIT
+2021  29.00 -0.04   -71.87      loss
+2022  27.00  0.01     1.32    PROFIT
+2023  23.12  0.23   281.50    PROFIT
+2024  35.00  0.34   709.33    PROFIT
+2025  78.25  0.25  1370.69    PROFIT
+2026  56.75  0.18   789.32    PROFIT

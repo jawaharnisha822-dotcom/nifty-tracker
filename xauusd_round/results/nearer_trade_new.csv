@@ -1,0 +1,7 @@
+name,trades,WR%,PF,expR_fine,expR_coarse,net$,DD%
+RECOMMENDED  | both   ,158.0,45.3,1.205,0.122,0.165,989.0,8.3
+RECOMMENDED  | nearer ,134.0,48.9,1.394,0.213,0.227,1591.0,7.8
+RECOMMENDED  | farther,24.0,45.8,1.242,0.14,0.14,161.0,3.0
+YOUR params  | both   ,187.0,30.5,0.788,-0.148,0.154,-1259.0,33.4
+YOUR params  | nearer ,160.0,34.0,0.936,-0.04,0.186,-337.0,21.7
+YOUR params  | farther,25.0,42.0,1.317,0.198,0.4,242.0,4.8

@@ -16,9 +16,11 @@
 //   B8  Risk distance can track volatility (ATR mode) instead of a fixed $5.15
 //
 // VALIDATED DEFAULTS (see REPORT.md):
-//   $100 grid, buffer $2, risk = max($17, 4 x ATR(96)), RR 1.5, 09:00 IST.
-//   2016-2026: 358 trades, 45.3% win rate, PF 1.20, max DD 15%, 8 of 11 years up.
-//   Positive at every intrabar resolution tested AND in both volatility regimes.
+//   $100 grid, buffer $2, risk = max($17, 4 x ATR(96)), RR 1.5, 09:00 IST,
+//   trading ONLY the round level nearer to the 09:00 open.
+//   2016-2026: 326 trades, 47.6% win rate, PF 1.33, max DD 11.8%,
+//   8 of 11 years profitable, profitable on 8/8 random seeds in BOTH
+//   2016-2024 and 2025-2026, at every intrabar resolution tested.
 // =============================================================================
 strategy("XAUUSD Round Number Breakout - Corrected",
      overlay              = true,
@@ -51,6 +53,9 @@ maxSlip     = input.float(1.0, "Max Entry Slippage ($)", minval=0.0, step=0.1, g
                   tooltip="B5: stop-limit cap. A gap worse than this is skipped.")
 dirMode     = input.string("Both", "Direction",
                   options=["Both", "Long only", "Short only"], group=grpE)
+sideMode    = input.string("Nearer only", "Which round level to trade",
+                  options=["Nearer only", "Both", "Farther only"], group=grpE,
+                  tooltip="At the setup bar, one round level is closer to the open than the other. Price reaches the NEARER level first far more often than geometry alone predicts (+8.1 points over the random-walk baseline, z=+6.6 across 2,692 setups). Trading only that side raised PF from 1.20 to 1.33 and cut drawdown from 15% to 12%.")
 
 grpR = "Risk"
 riskPercent = input.float(1.0, "Risk % Per Trade", minval=0.01, step=0.1, group=grpR)
@@ -71,6 +76,7 @@ var float lowerR    = na
 var int   expireBar = na
 var bool  armed     = false
 var bool  beDone    = false
+var bool  nearIsLong = false
 
 atrV = ta.atr(atrLen)
 
@@ -94,6 +100,9 @@ if isSetup
     longStop  := upperR + entryBuffer
     shortStop := lowerR - entryBuffer
 
+    // which round level is the open sitting closer to?
+    nearIsLong := (upperR - ref) < (ref - lowerR)
+
     // B7: CLOSED equity only - never strategy.equity (which includes open P&L)
     float closedEq = strategy.initial_capital + strategy.netprofit
     qty := riskDist > 0 ? (closedEq * riskPercent / 100.0) / (riskDist * pointValue) : 0.0
@@ -107,11 +116,16 @@ if isSetup
 //     means there is never more than one position open.
 // B5: stop-limit (stop = trigger, limit = worst acceptable price) caps gap risk.
 if isSetup and armed
-    if dirMode != "Short only"
+    bool allowLong  = sideMode == "Both" or
+         (sideMode == "Nearer only" ? nearIsLong : not nearIsLong)
+    bool allowShort = sideMode == "Both" or
+         (sideMode == "Nearer only" ? not nearIsLong : nearIsLong)
+
+    if dirMode != "Short only" and allowLong
         strategy.entry("LONG", strategy.long, qty = qty,
              stop = longStop, limit = longStop + maxSlip,
              oca_name = "RN", oca_type = strategy.oca.cancel)
-    if dirMode != "Long only"
+    if dirMode != "Long only" and allowShort
         strategy.entry("SHORT", strategy.short, qty = qty,
              stop = shortStop, limit = shortStop - maxSlip,
              oca_name = "RN", oca_type = strategy.oca.cancel)
@@ -165,6 +179,7 @@ if isSetup
          "\nshort "      + str.tostring(shortStop, "#.##") +
          "\nrisk $"      + str.tostring(riskDist,  "#.##") +
          "\nqty "        + str.tostring(qty,       "#.##") +
+         "\nnearer: "    + (nearIsLong ? "UP" : "DOWN") +
          (armed ? "" : "\nSKIPPED (not flat)"),
          style = label.style_label_down, textcolor = color.white,
          color = armed ? color.new(color.teal, 20) : color.new(color.maroon, 20))

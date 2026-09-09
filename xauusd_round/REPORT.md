@@ -246,3 +246,84 @@ Worse drawdown and it will need re-tuning as volatility drifts.
 * Forward-test on demo for 3-6 months; ~160 trades/yr means a quarter gives you
   ~40 trades, enough to spot a gross mismatch but not to confirm the edge.
 * Do not re-optimise the setup hour. Section 7 shows that specific knob is noise.
+
+---
+
+## 11. "Which round number is nearer — does price go that way?"
+
+Tested on every 09:00 IST setup, 2016-2026. Distance from the open to the $100
+level above and below; then which level price reaches first within 24 hours.
+
+**The trap:** a nearer barrier is hit first more often by pure geometry. For a
+driftless walk starting `d_dn` above the lower level and `d_up` below the upper,
+`P(upper first) = d_dn / (d_up + d_dn)`. So "the nearer one gets hit more" proves
+nothing. The test must be against that baseline.
+
+| period | setup days | days a level was hit | went to the NEARER one | random-walk baseline | edge | z |
+|---|---|---|---|---|---|---|
+| 2025-01 → 2026-06 | 370 | 243 (65.7 %) | **204 (84.0 %)** | 77.8 % | **+6.1 pts** | +2.45 |
+| 2016-2024 | 2,322 | 477 (20.5 %) | **470 (98.5 %)** | 89.4 % | **+9.1 pts** | +6.83 |
+| full 2016-2026 | 2,692 | 720 (26.7 %) | **674 (93.6 %)** | 85.5 % | **+8.1 pts** | +6.63 |
+
+**Your instinct is correct and statistically strong (z = +6.6).** Price really is
+drawn to the nearer $100 level, beyond what geometry explains. The effect is
+biggest when the nearer level is $20-40 away (+14 to +19 points over baseline);
+when it is under $10 away the baseline is already 95 %, so there is little room.
+
+### But note how many days nothing happens
+
+Only **26.7 %** of setup days touch either level within 24 h — and just 20.5 % in
+2016-2024, when gold at $1,200 rarely travelled $100 in a day. That single fact
+decides how the effect can and cannot be traded.
+
+### ❌ Trading it directly as a target ("magnet trade") — FAILS
+
+Enter at 09:00 toward the nearer level, take profit at the round number, stop the
+other way. Tested 30 combinations of stop size, minimum distance and TP pullback:
+
+| period | best result |
+|---|---|
+| 2025-01 → 2026-06 | +0.069 R, PF 1.16 — weak |
+| 2016-2024 | **every single combination negative**; best −0.005 R, PF 0.91 |
+
+Why: **84-95 % of those trades simply expire**. You cannot condition on "a level
+will be reached" — you only know that afterwards. Most days you are left holding
+a random position that pays the spread.
+
+### ✅ Using it as a FILTER on the breakout order — WORKS
+
+Leave the pending stop order, but place it only on the nearer side. Now the
+no-touch days cost nothing, because the order never fills.
+
+| config | trades | WR | PF | expectancy | max DD |
+|---|---|---|---|---|---|
+| recommended, both sides — 2025+ | 158 | 45.3 % | 1.205 | +0.122 R | 8.3 % |
+| **recommended, nearer only — 2025+** | 135 | 48.9 % | **1.394** | **+0.213 R** | **7.8 %** |
+| recommended, both sides — 2016-24 | 201 | 45.5 % | 1.209 | +0.120 R | 14.8 % |
+| **recommended, nearer only — 2016-24** | 190 | 46.6 % | **1.265** | **+0.148 R** | **11.5 %** |
+
+It improves both eras, and it lowers drawdown. ("Farther only" is untestable —
+just 3 trades in 9 years.)
+
+### Final configuration
+
+Everything from section 8, plus **trade only the nearer round level**:
+
+| period | trades | WR | PF | expectancy | net on $5k | max DD | seeds + |
+|---|---|---|---|---|---|---|---|
+| 2025-01 → 2026-06 | 135 | 48.8 % | 1.383 | +0.208 R | +$1,553 (+31.1 %) | **7.9 %** | 8/8 |
+| 2016-2024 (out of sample) | 190 | 46.5 % | 1.257 | +0.144 R | +$1,476 (+29.5 %) | 11.8 % | 8/8 |
+| **full 2016-2026** | **326** | **47.6 %** | **1.331** | **+0.176 R** | **+$3,636 (+72.7 %)** | **11.8 %** | **8/8** |
+
+Resolution stability — expectancy barely moves, which is what a real edge looks like:
+
+```
+  2025+      k=40: +0.227   k=120: +0.228   k=320: +0.208
+  2016-2024  k=40: +0.148   k=120: +0.149   k=320: +0.144
+```
+
+8 of 11 years profitable (2017, 2019, 2021 lost). Versus the "both sides"
+version: PF 1.204 → **1.331**, drawdown 15.0 % → **11.8 %**, return +48.7 % → **+72.7 %**.
+
+This is the largest single improvement found in the whole study — and it came
+from your observation, not from parameter fitting.

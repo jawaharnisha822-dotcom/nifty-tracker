@@ -63,6 +63,9 @@ class P2:
     seed: int = 0
     compound: bool = True
     skip_monday: bool = False
+    side_select: str = "both"       # 'both' | 'nearer' | 'farther'
+                                    # which round level to trade, by its
+                                    # distance from the setup open
 
     def label(self):
         sl = (f"sl={self.sl_from_round}" if self.sl_mode == "fixed"
@@ -234,10 +237,15 @@ def backtest2(df: pd.DataFrame, p: P2) -> dict:
                 lo_ = math.floor(ref / step) * step
                 if up_ == lo_:                      # exactly on the round number
                     up_, lo_ = ref + step, ref - step
-                if p.direction in ("both", "long"):
+                # which side is nearer to the setup open?
+                near = "long" if (up_ - ref) < (ref - lo_) else "short"
+                far = "short" if near == "long" else "long"
+                allow = {"both": {"long", "short"},
+                         "nearer": {near}, "farther": {far}}[p.side_select]
+                if p.direction in ("both", "long") and "long" in allow:
                     pend.append(dict(side="long", stop=up_ + p.entry_buffer, risk=risk,
                                      qty=qty, live=i + 1, expire=i + 1 + p.valid_bars))
-                if p.direction in ("both", "short"):
+                if p.direction in ("both", "short") and "short" in allow:
                     pend.append(dict(side="short", stop=lo_ - p.entry_buffer, risk=risk,
                                      qty=qty, live=i + 1, expire=i + 1 + p.valid_bars))
 
