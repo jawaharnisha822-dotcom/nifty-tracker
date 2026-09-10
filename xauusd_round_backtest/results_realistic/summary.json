@@ -1,0 +1,23 @@
+{
+  "summary": {
+    "trades": 15,
+    "wins": 7,
+    "losses": 8,
+    "win_rate": 46.67,
+    "gross_profit": 687.9,
+    "gross_loss": 454.78,
+    "profit_factor": 1.513,
+    "net_profit": 233.14,
+    "net_pct": 4.66,
+    "final_equity": 5233.14,
+    "max_drawdown": 138.47,
+    "max_drawdown_pct": 2.72,
+    "avg_win": 98.27,
+    "avg_loss": 56.85,
+    "expectancy_R": 0.316,
+    "tp_hits": 7,
+    "sl_hits": 8,
+    "open_at_end": false
+  },
+  "warnings": []
+}
